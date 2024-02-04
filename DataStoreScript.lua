@@ -1,3 +1,8 @@
+--[[
+I fixed some stuff with the code, looks like I forgot some stuff.
+Also added an extra option with the /cash and /gems commands
+]]
+
 ---- SERVICES ----
 local playerService = game:GetService("Players")
 local dataStoreService = game:GetService("DataStoreService")
