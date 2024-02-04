@@ -16,10 +16,14 @@ local defaultData = {
 		Gems = 0,
 	},
 }
+
 local updateAsync = Enum.DataStoreRequestType.UpdateAsync
 
+local productId = 1747730658
+local passId = 705221101
+
 local productFunctions = {
-	[1736530033] = function(player:Player)
+	[1747730658] = function(player:Player)
 		local leaderstats = player:FindFirstChild("leaderstats")
 		local gems:IntValue = leaderstats:FindFirstChild("Gems")
 		gems.Value += 50
@@ -27,7 +31,7 @@ local productFunctions = {
 }
 
 local passFunctions = {
-	[13600173502] = function(player:Player)
+	[705221101] = function(player:Player)
 		local leaderstats = player:FindFirstChild("leaderstats")
 		local cash:IntValue = leaderstats:FindFirstChild("Cash")
 		local gems:IntValue = leaderstats:FindFirstChild("Gems")
@@ -37,29 +41,49 @@ local passFunctions = {
 }
 
 ---- FUNCTIONS ----
+---- String function, splits the given string and returns the desired word within the string. ----
+local function getSplitMsg(message:string, number:number)
+	local splitStrings = string.split(message, " ")
+	if number > #splitStrings then
+		error("Error: could not retrieve split string from message. Have you included the second argument?")
+	end
+	return splitStrings[number]
+end
 
 ---- Chat command functions ----
 local function giveCashCmd(textSource, message)
+	print(message)
 	local userId = textSource.UserId
 	local player = playerService:GetPlayerByUserId(userId)
 	if player then
+		local amount = tonumber(getSplitMsg(message, 2))
 		local leaderstats = player:FindFirstChild("leaderstats")
 		local cash = leaderstats:FindFirstChild("Cash")
-		cash.Value += 10
-		print("10 cash has been given to player")
+		if amount and amount > 100 then
+			warn("Amount must not be greater than 100.")
+		else
+			cash.Value += amount
+			print(amount, "cash has been given to player")
+		end
 	else
 		warn("Error: Player could not be found")
 	end
 end
 
 local function giveGemsCmd(textSource, message)
+	print(message)
 	local userId = textSource.UserId
 	local player = playerService:GetPlayerByUserId(userId)
 	if player then
+		local amount = tonumber(getSplitMsg(message, 2))
 		local leaderstats = player:FindFirstChild("leaderstats")
 		local gems = leaderstats:FindFirstChild("Gems")
-		gems.Value += 10
-		print("10 gems has been given to player")
+		if amount and amount > 100 then
+			warn("Amount must not be greater than 100.")
+		else
+			gems.Value += amount
+			print(amount, "gems has been given to player")
+		end
 	else
 		warn("Error: Player could not be found")
 	end
@@ -69,7 +93,7 @@ local function promptProductCmd(textSource, message)
 	local userId = textSource.UserId
 	local player = playerService:GetPlayerByUserId(userId)
 	if player then
-		marketplaceService:PromptProductPurchase(player, 1736530033)
+		marketplaceService:PromptProductPurchase(player, productId)
 	else
 		warn("Error: Player could not be found")
 	end
@@ -79,7 +103,7 @@ local function promptPassCmd(textSource, message)
 	local userId = textSource.UserId
 	local player = playerService:GetPlayerByUserId(userId)
 	if player then
-		marketplaceService:PromptGamePassPurchase(player, 13600173502)
+		marketplaceService:PromptGamePassPurchase(player, passId)
 	else
 		warn("Error: Player could not be found")
 	end
@@ -97,8 +121,8 @@ local function productPromptFinished(userId, productId, wasPurchased)
 	end
 end
 
-local function passPromptFinished(userId, passId, wasPurchased)
-	local playerName = playerService:GetNameFromUserIdAsync(userId)
+local function passPromptFinished(player, passId, wasPurchased)
+	local playerName = player.Name
 	local passInfo = marketplaceService:GetProductInfo(passId, Enum.InfoType.GamePass)
 	if wasPurchased then
 		--Show player's purchase in output
@@ -117,7 +141,7 @@ local function processReceipt(receiptInfo)
 	if not player then --player may have left game, will run callback again when player rejoins
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	else
-		local success, result = pcall(productFunctions[1736530033], player)
+		local success, result = pcall(productFunctions[productId], player)
 		if success then
 			print("Purchase has been made successfully")
 		else
@@ -190,8 +214,8 @@ local function setUp(player)
 		
 		leaderstats.Parent = player
 		
-		if marketplaceService:PlayerOwnsAsset(player, 13600173502) then
-			passFunctions[13600173502](player)
+		if marketplaceService:PlayerOwnsAsset(player, passId) then
+			passFunctions[passId](player)
 		end
 		
 		print("Player data has successfuly loaded")
@@ -255,10 +279,10 @@ end
 
 
 ---- CONNECTIONS AND CALLBACKS ----
-textChatService.GiveCash.Triggered:Connect(giveCashCmd)
-textChatService.GiveGems.Triggered:Connect(giveGemsCmd)
-textChatService.PromptProduct.Triggered:Connect(promptProductCmd)
-textChatService.PromptPass.Triggered:Connect(promptPassCmd)
+textChatService.Commands.GiveCash.Triggered:Connect(giveCashCmd)
+textChatService.Commands.GiveGems.Triggered:Connect(giveGemsCmd)
+textChatService.Commands.PromptProduct.Triggered:Connect(promptProductCmd)
+textChatService.Commands.PromptPass.Triggered:Connect(promptPassCmd)
 
 marketplaceService.ProcessReceipt = processReceipt
 marketplaceService.PromptProductPurchaseFinished:Connect(productPromptFinished)
